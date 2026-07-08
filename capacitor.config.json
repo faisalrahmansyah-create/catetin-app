@@ -3,10 +3,6 @@
   "appName": "CatetIn",
   "webDir": "www",
   "bundledWebRuntime": false,
-  "server": {
-    "androidScheme": "https",
-    "url": "https://faisalrahmansyah-create.github.io/catetin-app/"
-  },
   "android": {
     "allowMixedContent": true,
     "webContentsDebuggingEnabled": true
