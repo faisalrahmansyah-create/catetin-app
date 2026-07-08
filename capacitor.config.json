@@ -3,6 +3,13 @@
   "appName": "CatetIn",
   "webDir": "www",
   "bundledWebRuntime": false,
+  "server": {
+    "allowNavigation": [
+      "faisalrahmansyah-create.github.io",
+      "accounts.google.com",
+      "erqoltvxvlqxpzgjtkrm.supabase.co"
+    ]
+  },
   "android": {
     "allowMixedContent": true,
     "webContentsDebuggingEnabled": true
