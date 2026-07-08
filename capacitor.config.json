@@ -4,11 +4,7 @@
   "webDir": "www",
   "bundledWebRuntime": false,
   "server": {
-    "allowNavigation": [
-      "faisalrahmansyah-create.github.io",
-      "accounts.google.com",
-      "erqoltvxvlqxpzgjtkrm.supabase.co"
-    ]
+    "allowNavigation": ["*"]
   },
   "android": {
     "allowMixedContent": true,
