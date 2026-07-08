@@ -1,0 +1,17 @@
+{
+  "name": "catetin-app",
+  "version": "1.0.0",
+  "description": "CatetIn - Catat Pemasukan & Pengeluaran",
+  "main": "index.html",
+  "scripts": {
+    "build": "npx @capacitor/cli build android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "capacitor-notifications-listener": "^0.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.0.0"
+  }
+}
