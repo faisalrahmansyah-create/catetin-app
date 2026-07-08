@@ -7,12 +7,27 @@ let isLoggedIn = false;
 
 // ===== CHECK AUTH =====
 async function checkAuth() {
-  const { data: { session } } = await db.auth.getSession();
-  if (session) {
-    currentUser = session.user;
-    isLoggedIn = true;
-    showAppContent();
-  } else {
+  console.log('🔐 Checking auth...');
+  
+  try {
+    const { data: { session }, error } = await db.auth.getSession();
+    console.log('📦 Session:', session);
+    
+    if (error) {
+      console.error('❌ Session error:', error);
+    }
+    
+    if (session) {
+      currentUser = session.user;
+      isLoggedIn = true;
+      console.log('✅ User logged in:', currentUser.email);
+      showAppContent();
+    } else {
+      console.log('ℹ️ No session found, showing login');
+      showLoginModal();
+    }
+  } catch (error) {
+    console.error('❌ Check auth error:', error);
     showLoginModal();
   }
 }
@@ -28,17 +43,30 @@ function showAppContent() {
   document.getElementById('appContent').classList.add('visible');
   updateUserProfile();
   fetchData();
+  
+  // ===== START NOTIFICATION LISTENER =====
+  if (typeof startNotificationListener === 'function') {
+    setTimeout(startNotificationListener, 2000);
+  }
 }
 
 async function loginWithGoogle() {
+  console.log('🔐 Login with Google clicked');
+  console.log('📍 Redirect to:', APP_URL);
+  
   try {
-    const { error } = await db.auth.signInWithOAuth({
+    const { data, error } = await db.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + window.location.pathname }
+      options: { 
+        redirectTo: APP_URL
+      }
     });
+    
+    console.log('📦 Login response:', { data, error });
+    
     if (error) throw error;
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('❌ Login error:', error);
     alert('Gagal login: ' + error.message);
   }
 }
@@ -74,3 +102,8 @@ function updateUserProfile() {
     emailEl.textContent = email;
   }
 }
+
+// ===== EKSPOR GLOBAL =====
+window.loginWithGoogle = loginWithGoogle;
+window.checkAuth = checkAuth;
+window.logout = logout;
