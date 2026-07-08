@@ -228,3 +228,193 @@ document.addEventListener('DOMContentLoaded', function() {
 
 console.log('📦 Cashflow App - All modules ready');
 
+// ============================================================
+// NOTIFICATION LISTENER - OTOMATIS CATAT DARI NOTIFIKASI
+// ============================================================
+
+let notifListener = null;
+
+async function startNotificationListener() {
+  try {
+    // Cek apakah running di native Android
+    if (typeof Capacitor === 'undefined' || !Capacitor.isNative) {
+      console.log('📱 Not running in native app, skipping notification listener');
+      return;
+    }
+
+    // Import plugin
+    const { NotificationsListener } = await import('capacitor-notifications-listener');
+    const listener = NotificationsListener;
+    notifListener = listener;
+
+    // Cek izin
+    const isListening = await listener.isListening();
+    console.log('📱 Is listening:', isListening);
+
+    if (!isListening) {
+      await listener.requestPermission();
+      // User harus aktifkan manual di: Settings → Apps → Special access → Notification access
+    }
+
+    // Mulai listening
+    await listener.startListening({
+      packagesWhitelist: [
+        'com.bca',
+        'com.dana',
+        'com.ovo',
+        'com.shopee',
+        'com.gopay',
+        'com.mandiri',
+        'com.bni',
+        'com.bri'
+      ]
+    });
+
+    console.log('✅ Notification listener started');
+
+    // Tangkap notifikasi
+    listener.addListener('notificationReceivedEvent', (notification) => {
+      console.log('📱 Notifikasi tertangkap:', notification);
+
+      const combined = [
+        notification.apptitle || '',
+        notification.title || '',
+        notification.text || '',
+        ...(notification.textlines || [])
+      ].join(' ');
+
+      const result = parseNotificationText(combined);
+      
+      if (result && result.amount > 0) {
+        showNotifConfirmation(result);
+      }
+    });
+
+  } catch (error) {
+    console.warn('⚠️ Notification listener error:', error);
+  }
+}
+
+// ===== PARSE NOTIFIKASI =====
+function parseNotificationText(text) {
+  if (!text || text.trim().length === 0) return null;
+
+  const lower = text.toLowerCase();
+  const result = {
+    type: 'pengeluaran',
+    amount: 0,
+    category: null,
+    wallet: null,
+    walletName: null,
+    merchant: null
+  };
+
+  // Deteksi jenis
+  const incomeKeywords = ['masuk', 'diterima', 'transfer masuk', 'kredit', 'topup', 'gaji', 'bonus'];
+  const expenseKeywords = ['keluar', 'terbayar', 'transfer keluar', 'debit', 'pembayaran', 'belanja', 'bayar'];
+  
+  let incomeScore = 0, expenseScore = 0;
+  incomeKeywords.forEach(kw => { if (lower.includes(kw)) incomeScore++; });
+  expenseKeywords.forEach(kw => { if (lower.includes(kw)) expenseScore++; });
+
+  // Ekstrak nominal
+  const amount = extractNumberFromText(text);
+  result.amount = amount;
+
+  // Deteksi dompet
+  const walletKeywords = ['dana', 'ovo', 'shopeepay', 'gopay', 'bca', 'bni', 'bri', 'mandiri'];
+  let detectedWallet = null;
+  for (const kw of walletKeywords) {
+    if (lower.includes(kw)) {
+      detectedWallet = kw;
+      break;
+    }
+  }
+  if (detectedWallet) {
+    const found = allWallets.find(w => w.name.toLowerCase() === detectedWallet);
+    if (found) {
+      result.wallet = found.id;
+      result.walletName = found.name;
+    }
+  }
+
+  // Ekstrak merchant
+  const patterns = [
+    /(?:ke|di|pada|untuk)\s+([a-zA-Z\s]+?)(?:\s+sebesar|\s+senilai|\s*$)/i,
+    /pembayaran\s+([a-zA-Z\s]+?)(?:\s+sebesar|\s*$)/i,
+    /belanja\s+(?:di|pada)\s+([a-zA-Z\s]+?)(?:\s+sebesar|\s*$)/i
+  ];
+  let merchant = null;
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) {
+      merchant = match[1].trim();
+      break;
+    }
+  }
+  if (merchant) {
+    result.merchant = merchant;
+    result.category = merchant;
+  }
+
+  // Tentukan jenis
+  if (incomeScore > expenseScore) result.type = 'pemasukan';
+  else if (expenseScore > incomeScore) result.type = 'pengeluaran';
+  else {
+    if (lower.includes('bayar') || lower.includes('belanja')) result.type = 'pengeluaran';
+    else if (lower.includes('gaji') || lower.includes('bonus')) result.type = 'pemasukan';
+  }
+
+  if (result.amount === 0) return null;
+  return result;
+}
+
+// ===== POPUP KONFIRMASI =====
+function showNotifConfirmation(data) {
+  const msg = '📱 Notifikasi Terdeteksi!\n\n' +
+    (data.type === 'pemasukan' ? '📥' : '📤') + ' ' + formatRupiah(data.amount) + '\n' +
+    'Kategori: ' + (data.category || 'Tidak terdeteksi') + '\n' +
+    'Dompet: ' + (data.walletName || 'Belum ada dompet') + '\n\n' +
+    'Simpan transaksi ini?';
+  
+  if (confirm(msg)) {
+    saveNotificationTransaction(data);
+  }
+}
+
+// ===== SIMPAN TRANSAKSI =====
+async function saveNotificationTransaction(data) {
+  try {
+    let walletId = data.wallet;
+    if (!walletId && allWallets.length > 0) {
+      walletId = allWallets[0].id;
+    }
+    if (!walletId) {
+      alert('❌ Belum ada dompet. Silakan buat dompet terlebih dahulu.');
+      return;
+    }
+
+    await db.from('transactions').insert([{
+      type: data.type,
+      amount: data.amount,
+      category: data.category || 'Notifikasi',
+      description: 'Dari notifikasi',
+      transaction_date: new Date().toISOString().split('T')[0],
+      wallet_id: walletId
+    }]);
+
+    await fetchData();
+    alert('✅ Transaksi dari notifikasi berhasil disimpan!');
+  } catch (error) {
+    console.error('Error saving notification:', error);
+    alert('❌ Gagal menyimpan transaksi.');
+  }
+}
+
+// ===== EKSPOR GLOBAL =====
+window.startNotificationListener = startNotificationListener;
+window.parseNotificationText = parseNotificationText;
+window.saveNotificationTransaction = saveNotificationTransaction;
+window.showNotifConfirmation = showNotifConfirmation;
+
+console.log('✅ Notification listener module loaded');
