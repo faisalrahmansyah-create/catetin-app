@@ -52,13 +52,22 @@ function showAppContent() {
 
 async function loginWithGoogle() {
   console.log('🔐 Login with Google clicked');
-  console.log('📍 Redirect to:', APP_URL);
+  
+  // ===== PASTIKAN APP_URL TERSEDIA =====
+  let redirectUrl;
+  if (typeof APP_URL !== 'undefined' && APP_URL) {
+    redirectUrl = APP_URL;
+  } else {
+    redirectUrl = window.location.origin + window.location.pathname;
+    console.warn('⚠️ APP_URL not defined, using fallback:', redirectUrl);
+  }
+  console.log('📍 Redirect to:', redirectUrl);
   
   try {
     const { data, error } = await db.auth.signInWithOAuth({
       provider: 'google',
       options: { 
-        redirectTo: APP_URL
+        redirectTo: redirectUrl
       }
     });
     
@@ -73,6 +82,7 @@ async function loginWithGoogle() {
 
 // ===== LOGOUT =====
 async function logout() {
+  console.log('🚪 Logging out...');
   await db.auth.signOut();
   isLoggedIn = false;
   currentUser = null;
