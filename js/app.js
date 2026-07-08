@@ -214,6 +214,14 @@ document.addEventListener('DOMContentLoaded', function() {
   checkAuth();
   console.log('✅ Auth check completed');
   
+  // ===== 15.5 SETUP APP LISTENER (UNTUK DEEP LINK) =====
+  if (typeof setupAppListener === 'function') {
+    setTimeout(setupAppListener, 1000);
+    console.log('✅ App listener setup called');
+  } else {
+    console.warn('⚠️ setupAppListener not available');
+  }
+  
   // ===== 16. DEFAULT TAB =====
   const defaultTab = document.querySelector('.tab-btn[data-tab="transactions"]');
   if (defaultTab) defaultTab.click();
