@@ -50,6 +50,7 @@ function showAppContent() {
   }
 }
 
+// ===== LOGIN WITH GOOGLE (PAKAI BROWSER PLUGIN) =====
 async function loginWithGoogle() {
   console.log('🔐 Login with Google clicked');
   
@@ -64,6 +65,7 @@ async function loginWithGoogle() {
   console.log('📍 Redirect to:', redirectUrl);
   
   try {
+    // ===== 1. Dapatkan URL Login dari Supabase =====
     const { data, error } = await db.auth.signInWithOAuth({
       provider: 'google',
       options: { 
@@ -74,9 +76,66 @@ async function loginWithGoogle() {
     console.log('📦 Login response:', { data, error });
     
     if (error) throw error;
+    
+    // ===== 2. Buka URL di Custom Tab =====
+    if (data && data.url) {
+      if (typeof Capacitor !== 'undefined' && Capacitor.isNative) {
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.open({ 
+          url: data.url,
+          presentationStyle: 'fullscreen'
+        });
+        console.log('✅ Browser opened for login');
+      } else {
+        window.location.href = data.url;
+      }
+    } else {
+      alert('❌ Gagal mendapatkan URL login.');
+    }
+    
   } catch (error) {
     console.error('❌ Login error:', error);
     alert('Gagal login: ' + error.message);
+  }
+}
+
+// ===== HANDLE DEEP LINK (REDIRECT SETELAH LOGIN) =====
+async function handleDeepLink() {
+  console.log('🔗 Handling deep link...');
+  
+  // Cek apakah ada session di Supabase setelah redirect
+  const { data: { session }, error } = await db.auth.getSession();
+  
+  if (error) {
+    console.error('❌ Error getting session:', error);
+    return;
+  }
+  
+  if (session) {
+    console.log('✅ Login berhasil via redirect!');
+    currentUser = session.user;
+    isLoggedIn = true;
+    showAppContent();
+  } else {
+    console.log('ℹ️ No session found after redirect');
+  }
+}
+
+// ===== DETEKSI KEMBALI KE APLIKASI SETELAH BROWSER TUTUP =====
+async function setupAppListener() {
+  if (typeof Capacitor !== 'undefined' && Capacitor.isNative) {
+    const { App } = await import('@capacitor/app');
+    
+    // Deteksi ketika aplikasi kembali ke foreground
+    App.addListener('appStateChange', async (state) => {
+      console.log('📱 App state changed:', state);
+      if (state.isActive) {
+        // Aplikasi kembali ke foreground → cek session
+        await handleDeepLink();
+      }
+    });
+    
+    console.log('✅ App listener registered');
   }
 }
 
