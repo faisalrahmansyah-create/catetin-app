@@ -50,7 +50,7 @@ function showAppContent() {
   }
 }
 
-// ===== LOGIN WITH GOOGLE (PAKAI BROWSER PLUGIN) =====
+// ===== LOGIN WITH GOOGLE (REDIRECT DI WEBVIEW) =====
 async function loginWithGoogle() {
   console.log('🔐 Login with Google clicked');
   
@@ -77,18 +77,10 @@ async function loginWithGoogle() {
     
     if (error) throw error;
     
-    // ===== 2. Buka URL di Custom Tab =====
+    // ===== 2. Redirect di WebView (langsung) =====
     if (data && data.url) {
-      if (typeof Capacitor !== 'undefined' && Capacitor.isNative) {
-        const { Browser } = await import('@capacitor/browser');
-        await Browser.open({ 
-          url: data.url,
-          presentationStyle: 'fullscreen'
-        });
-        console.log('✅ Browser opened for login');
-      } else {
-        window.location.href = data.url;
-      }
+      console.log('🔀 Redirecting to:', data.url);
+      window.location.href = data.url;
     } else {
       alert('❌ Gagal mendapatkan URL login.');
     }
@@ -121,21 +113,25 @@ async function handleDeepLink() {
   }
 }
 
-// ===== DETEKSI KEMBALI KE APLIKASI SETELAH BROWSER TUTUP =====
+// ===== DETEKSI KEMBALI KE APLIKASI SETELAH REDIRECT =====
 async function setupAppListener() {
   if (typeof Capacitor !== 'undefined' && Capacitor.isNative) {
-    const { App } = await import('@capacitor/app');
-    
-    // Deteksi ketika aplikasi kembali ke foreground
-    App.addListener('appStateChange', async (state) => {
-      console.log('📱 App state changed:', state);
-      if (state.isActive) {
-        // Aplikasi kembali ke foreground → cek session
-        await handleDeepLink();
-      }
-    });
-    
-    console.log('✅ App listener registered');
+    try {
+      const { App } = await import('@capacitor/app');
+      
+      // Deteksi ketika aplikasi kembali ke foreground
+      App.addListener('appStateChange', async (state) => {
+        console.log('📱 App state changed:', state);
+        if (state.isActive) {
+          // Aplikasi kembali ke foreground → cek session
+          await handleDeepLink();
+        }
+      });
+      
+      console.log('✅ App listener registered');
+    } catch (error) {
+      console.warn('⚠️ App listener error:', error);
+    }
   }
 }
 
