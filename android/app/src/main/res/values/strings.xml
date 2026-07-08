@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CatetIn</string>
+    <string name="title_activity_main">CatetIn</string>
+    <string name="package_name">com.catetin.app</string>
+    <string name="custom_url_scheme">com.catetin.app</string>
+</resources>
