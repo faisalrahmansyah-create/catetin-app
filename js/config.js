@@ -2,12 +2,12 @@
 // CONFIGURATION
 // ============================================
 
-// ===== SUPABASE EDGE FUNCTION URL =====
-const SUPABASE_FUNCTION_URL = 'https://erqoltvxvlqxpzgjtkrm.supabase.co/functions/v1/gemini-proxy';
-
-// ===== SUPABASE CONFIG =====
+// ===== SUPABASE CREDENTIALS =====
 const SUPABASE_URL = 'https://erqoltvxvlqxpzgjtkrm.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycW9sdHZ4dmxxeHB6Z2p0a3JtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIyODA3OTMsImV4cCI6MjA5Nzg1Njc5M30.P-uKjsjapfRPTteWU75oxzAOc1g0tPhjgoPGPvGTVqc';
+
+// ===== SUPABASE EDGE FUNCTION URL =====
+const SUPABASE_FUNCTION_URL = 'https://erqoltvxvlqxpzgjtkrm.supabase.co/functions/v1/gemini-proxy';
 
 // ===== DOMAIN CONFIG (UNTUK REDIRECT LOGIN GOOGLE) =====
 const APP_URL = 'https://faisalrahmansyah-create.github.io/catetin-app/';
