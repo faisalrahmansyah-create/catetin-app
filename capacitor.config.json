@@ -3,9 +3,6 @@
   "appName": "CatetIn",
   "webDir": "www",
   "bundledWebRuntime": false,
-  "server": {
-    "allowNavigation": ["*"]
-  },
   "android": {
     "allowMixedContent": true,
     "webContentsDebuggingEnabled": true
