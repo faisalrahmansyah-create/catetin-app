@@ -4,7 +4,7 @@
   "description": "CatetIn - Catat Pemasukan & Pengeluaran",
   "main": "index.html",
   "scripts": {
-    "build": "npx @capacitor/cli build android"
+    "build": "echo 'No web build process needed for vanilla JS'"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",
